@@ -148,4 +148,65 @@ describe('BlogPost API resource', function () {
         });
     });
   });
+
+  // PUT
+  describe('PUT endpoint', function () {
+    // make existant blogpost from db
+    // make put req to update
+    // prove post returned by req contains data sent
+    // prove data updated updated correctly
+    it('should update fields sent over', function () {
+      const updateData = {
+        title: 'sleep deprived',
+        content: 'apple tartar sauce',
+        author: {
+          firstName: 'billy',
+          lastName: 'joe'
+        }
+      };
+      return BlogPost
+        .findOne()
+        .then(function (blogpost) {
+          updateData.id = blogpost.id;
+          // make request and check if it's correct
+          return chai.request(app)
+            .put(`/posts/${blogpost.id}`)
+            .send(updateData);
+        })
+        .then(function (res) {
+          expect(res).to.have.status(204);
+          return BlogPost.findById(updateData.id);
+        })
+        .then(function (blogpost) {
+          expect(blogpost.title).to.equal(updateData.title);
+          expect(blogpost.content).to.equal(updateData.content);
+          expect(blogpost.author.firstName).to.equal(updateData.author.firstName);
+          expect(blogpost.author.lastName).to.equal(updateData.author.lastName);
+        });
+    });
+  });
+
+  // DELETE
+  describe('DELETE endpoint', function () {
+    // get a blogpost
+    // make delete request for blog's id
+    // assert res has right status code
+    // prve blog with id doesn't exist anymore
+    it('delete a blogpost by id', function () {
+      let blogpost;
+      return BlogPost
+        .findOne()
+        .then(function (_blogpost) {
+          blogpost = _blogpost;
+          return chai.request(app).delete(`/posts/${blogpost.id}`);
+        })
+        .then(function (res) {
+          expect(res).to.have.status(204);
+          return BlogPost.findById(blogpost.id);
+        })
+        .then(function (_blogpost) {
+          expect(_blogpost).to.be.null;
+        });
+    });
+  });
 });
