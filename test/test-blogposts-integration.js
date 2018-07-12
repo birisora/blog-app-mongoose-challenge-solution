@@ -116,4 +116,36 @@ describe('BlogPost API resource', function () {
   });
 
   // POST
+  describe('POST endpoint', function () {
+    // make a post req with some data then prove get back righ keys
+    // and that it has an id
+    it('should add a new blogPost', function () {
+      const newBlogpost = generateBlogpostData();
+
+      return chai.request(app)
+        .post('/posts')
+        .send(newBlogpost)
+        .then(function (res) {
+          expect(res).to.have.status(201);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body).to.include.keys(
+            'id', 'title', 'content', 'author', 'created'
+          );
+          expect(res.body.title).to.equal(newBlogpost.title);
+          // check if we have id
+          expect(res.body.id).to.not.be.null;
+          expect(res.body.content).to.equal(newBlogpost.content);
+          expect(res.body.author).to.equal(
+            `${newBlogpost.author.firstName} ${newBlogpost.author.lastName}`);
+          return BlogPost.findById(res.body.id);
+        })
+        .then(function (blogpost) {
+          expect(blogpost.title).to.equal(newBlogpost.title);
+          expect(blogpost.content).to.equal(newBlogpost.content);
+          expect(blogpost.author.firstName).to.equal(newBlogpost.author.firstName);
+          expect(blogpost.author.lastName).to.equal(newBlogpost.author.lastName);
+        });
+    });
+  });
 });
