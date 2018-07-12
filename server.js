@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
 const { DATABASE_URL, PORT } = require('./config');
-const { BlogPost } = require('./models');
+const { Post } = require('./models');
 
 const app = express();
 
@@ -14,7 +14,7 @@ app.use(morgan('common'));
 app.use(express.json());
 
 app.get('/posts', (req, res) => {
-  BlogPost
+  Post
     .find()
     .then(posts => {
       res.json(posts.map(post => post.serialize()));
@@ -26,7 +26,7 @@ app.get('/posts', (req, res) => {
 });
 
 app.get('/posts/:id', (req, res) => {
-  BlogPost
+  Post
     .findById(req.params.id)
     .then(post => res.json(post.serialize()))
     .catch(err => {
@@ -46,7 +46,7 @@ app.post('/posts', (req, res) => {
     }
   }
 
-  BlogPost
+  Post
     .create({
       title: req.body.title,
       content: req.body.content,
@@ -62,7 +62,7 @@ app.post('/posts', (req, res) => {
 
 
 app.delete('/posts/:id', (req, res) => {
-  BlogPost
+  Post
     .findByIdAndRemove(req.params.id)
     .then(() => {
       res.status(204).json({ message: 'success' });
@@ -89,7 +89,7 @@ app.put('/posts/:id', (req, res) => {
     }
   });
 
-  BlogPost
+  Post
     .findByIdAndUpdate(req.params.id, { $set: updated }, { new: true })
     .then(updatedPost => res.status(204).end())
     .catch(err => res.status(500).json({ message: 'Something went wrong' }));
@@ -97,7 +97,7 @@ app.put('/posts/:id', (req, res) => {
 
 
 app.delete('/:id', (req, res) => {
-  BlogPost
+  Post
     .findByIdAndRemove(req.params.id)
     .then(() => {
       console.log(`Deleted blog post with id \`${req.params.id}\``);
@@ -118,7 +118,8 @@ let server;
 // this function connects to our database, then starts the server
 function runServer(databaseUrl, port = PORT) {
   return new Promise((resolve, reject) => {
-    mongoose.connect(databaseUrl, err => {
+    const options = { useNewUrlParser: true }
+    mongoose.connect(databaseUrl, options, err => {
       if (err) {
         return reject(err);
       }

@@ -3,7 +3,7 @@
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
-const blogPostSchema = mongoose.Schema({
+const postSchema = mongoose.Schema({
   author: {
     firstName: String,
     lastName: String
@@ -14,11 +14,11 @@ const blogPostSchema = mongoose.Schema({
 });
 
 
-blogPostSchema.virtual('authorName').get(function() {
+postSchema.virtual('authorName').get(function() {
   return `${this.author.firstName} ${this.author.lastName}`.trim();
 });
 
-blogPostSchema.methods.serialize = function() {
+postSchema.methods.serialize = function() {
   return {
     id: this._id,
     author: this.authorName,
@@ -28,6 +28,6 @@ blogPostSchema.methods.serialize = function() {
   };
 };
 
-const BlogPost = mongoose.model('BlogPost', blogPostSchema);
+const Post = mongoose.model('Post', postSchema);
 
-module.exports = {BlogPost};
+module.exports = {Post};
