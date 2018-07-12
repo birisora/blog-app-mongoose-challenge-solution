@@ -30,7 +30,7 @@ function seedBlogpostData () {
 function generateBlogpostData () {
   return {
     title: faker.commerce.productName(),
-    content: faker.loerm.paragraph(),
+    content: faker.lorem.paragraph(),
     author: {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName()
@@ -43,7 +43,7 @@ function generateBlogpostData () {
 // doesn't stick around for next
 function tearDownDb () {
   console.warn('Deleting Database');
-  return mongoose.connection.dropDataBase();
+  return mongoose.connection.dropDatabase();
 }
 
 // need each hook functions to return a promise
@@ -66,5 +66,54 @@ describe('BlogPost API resource', function () {
   });
 
   // Now we can make tests for each of the endpoints
+  describe('GET endpoint', function () {
+    it('should return all existing blogposts', function () {
+      // get all posts returned by GET req to /posts
+      // prove has right status and data type
+      // prove number of posts equal to num in db
+      let res;
+      return chai.request(app)
+        .get('/posts')
+        .then(function (_res) {
+          res = _res;
+          expect(res).to.have.status(200);
+          // otherwise db seeding failed
+          expect(res.body).to.have.lengthOf.at.least(1);
+          return BlogPost.count();
+        })
+        .then(function (count) {
+          expect(res.body).to.have.lengthOf(count);
+        });
+    });
 
+    it('should return blogposts with right fields', function () {
+      // get back all posts and ensure have expected keys
+      let resBlogpost;
+      return chai.request(app)
+        .get('/posts')
+        .then(function (res) {
+          expect(res).to.have.status(200);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('array');
+          expect(res.body).to.have.lengthOf.at.least(1);
+
+          res.body.forEach(function (post) {
+            expect(post).to.be.a('object');
+            expect(post).to.include.keys (
+              'id', 'title', 'content', 'author', 'created');
+          });
+          resBlogpost = res.body[0];
+          return BlogPost.findById(resBlogpost.id);
+        })
+        .then(function (blogpost) {
+          expect(resBlogpost.id).to.equal(blogpost.id);
+          expect(resBlogpost.title).to.equal(blogpost.title);
+          expect(resBlogpost.content).to.equal(blogpost.content);
+          // since blogpost.author is an object while resBlogpost.author is string
+          expect(resBlogpost.author).to.contain(blogpost.author.firstName, blogpost.author.lastName);
+        });
+    });
+  });
+
+  // POST
 });
