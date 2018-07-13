@@ -118,6 +118,7 @@ let server;
 // this function connects to our database, then starts the server
 function runServer(databaseUrl, port = PORT) {
   return new Promise((resolve, reject) => {
+    // deprication warning solved
     const options = { useNewUrlParser: true }
     mongoose.connect(databaseUrl, options, err => {
       if (err) {

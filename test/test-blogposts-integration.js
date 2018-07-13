@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 // allows for expect syntax
 const expect = chai.expect;
 
-const { BlogPost } = require('../models');
+const { Post } = require('../models');
 const { app, runServer, closeServer } = require('../server');
 const { TEST_DATABASE_URL } = require('../config');
 
@@ -23,7 +23,7 @@ function seedBlogpostData () {
     seedData.push(generateBlogpostData());
   }
   // return a promise
-  return BlogPost.insertMany(seedData);
+  return Post.insertMany(seedData);
 }
 
 // need data for title, content, author
@@ -48,9 +48,9 @@ function tearDownDb () {
 
 // need each hook functions to return a promise
 // otherwise need a done callback
-describe('BlogPost API resource', function () {
+describe('Post API resource', function () {
   before(function () {
-    return runServer(TEST_DATABASE_URL);
+    return runServer(TEST_DATABASE_URL, 8081);
   });
   
   beforeEach(function () {
@@ -79,7 +79,7 @@ describe('BlogPost API resource', function () {
           expect(res).to.have.status(200);
           // otherwise db seeding failed
           expect(res.body).to.have.lengthOf.at.least(1);
-          return BlogPost.count();
+          return Post.count();
         })
         .then(function (count) {
           expect(res.body).to.have.lengthOf(count);
@@ -103,7 +103,7 @@ describe('BlogPost API resource', function () {
               'id', 'title', 'content', 'author', 'created');
           });
           resBlogpost = res.body[0];
-          return BlogPost.findById(resBlogpost.id);
+          return Post.findById(resBlogpost.id);
         })
         .then(function (blogpost) {
           expect(resBlogpost.id).to.equal(blogpost.id);
@@ -138,7 +138,7 @@ describe('BlogPost API resource', function () {
           expect(res.body.content).to.equal(newBlogpost.content);
           expect(res.body.author).to.equal(
             `${newBlogpost.author.firstName} ${newBlogpost.author.lastName}`);
-          return BlogPost.findById(res.body.id);
+          return Post.findById(res.body.id);
         })
         .then(function (blogpost) {
           expect(blogpost.title).to.equal(newBlogpost.title);
@@ -164,7 +164,7 @@ describe('BlogPost API resource', function () {
           lastName: 'joe'
         }
       };
-      return BlogPost
+      return Post
         .findOne()
         .then(function (blogpost) {
           updateData.id = blogpost.id;
@@ -175,7 +175,7 @@ describe('BlogPost API resource', function () {
         })
         .then(function (res) {
           expect(res).to.have.status(204);
-          return BlogPost.findById(updateData.id);
+          return Post.findById(updateData.id);
         })
         .then(function (blogpost) {
           expect(blogpost.title).to.equal(updateData.title);
@@ -194,7 +194,7 @@ describe('BlogPost API resource', function () {
     // prve blog with id doesn't exist anymore
     it('delete a blogpost by id', function () {
       let blogpost;
-      return BlogPost
+      return Post
         .findOne()
         .then(function (_blogpost) {
           blogpost = _blogpost;
@@ -202,7 +202,7 @@ describe('BlogPost API resource', function () {
         })
         .then(function (res) {
           expect(res).to.have.status(204);
-          return BlogPost.findById(blogpost.id);
+          return Post.findById(blogpost.id);
         })
         .then(function (_blogpost) {
           expect(_blogpost).to.be.null;

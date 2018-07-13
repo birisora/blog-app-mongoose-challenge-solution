@@ -1,0 +1,4 @@
+- making seed data correct
+- renamed model
+- removed warning
+- name of URI matched with changes from config
