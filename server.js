@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
 const { DATABASE_URL, PORT } = require('./config');
-const { Post } = require('./models');
+const { Post, Author } = require('./models');
 
 const app = express();
 
@@ -15,7 +15,8 @@ app.use(express.json());
 
 app.get('/posts', (req, res) => {
   Post
-    .find()
+    .findOne()
+    // .populate('author')
     .then(posts => {
       res.json(posts.map(post => post.serialize()));
     })
@@ -116,10 +117,10 @@ app.use('*', function (req, res) {
 let server;
 
 // this function connects to our database, then starts the server
-function runServer(databaseUrl, port = PORT) {
+function runServer (databaseUrl, port = PORT) {
   return new Promise((resolve, reject) => {
     // deprication warning solved
-    const options = { useNewUrlParser: true }
+    const options = { useNewUrlParser: true };
     mongoose.connect(databaseUrl, options, err => {
       if (err) {
         return reject(err);
