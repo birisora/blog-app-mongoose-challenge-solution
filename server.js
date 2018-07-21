@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
 const { DATABASE_URL, PORT } = require('./config');
-const { Post, Author } = require('./models');
+const { Author, BlogPost } = require('./models');
 
 const app = express();
 
@@ -14,11 +14,17 @@ app.use(morgan('common'));
 app.use(express.json());
 
 app.get('/posts', (req, res) => {
-  Post
-    .findOne()
-    // .populate('author')
+  BlogPost
+    .find()
     .then(posts => {
-      res.json(posts.map(post => post.serialize()));
+      res.json(posts.map(post => {
+        return {
+          id: post._id,
+          author: post.authorName,
+          content: post.content,
+          title: post.title
+        };
+      }));
     })
     .catch(err => {
       console.error(err);
@@ -27,7 +33,7 @@ app.get('/posts', (req, res) => {
 });
 
 app.get('/posts/:id', (req, res) => {
-  Post
+  BlogPost
     .findById(req.params.id)
     .then(post => res.json(post.serialize()))
     .catch(err => {
@@ -37,43 +43,42 @@ app.get('/posts/:id', (req, res) => {
 });
 
 app.post('/posts', (req, res) => {
-  const requiredFields = ['title', 'content', 'author'];
-  for (let i = 0; i < requiredFields.length; i++) {
-    const field = requiredFields[i];
+  const requiredFields = ['title', 'content', 'author_id'];
+  requiredFields.forEach(field => {
     if (!(field in req.body)) {
       const message = `Missing \`${field}\` in request body`;
       console.error(message);
       return res.status(400).send(message);
     }
-  }
+  });
 
-  Post
-    .create({
-      title: req.body.title,
-      content: req.body.content,
-      author: req.body.author
+  Author
+    .findById(req.body.author_id)
+    .then((author) => {
+      if (author) {
+        BlogPost
+          .create({
+            title: req.body.title,
+            content: req.body.content,
+            author: req.body.id
+          })
+          .then(blogBlogPost => res.status(201).json(blogBlogPost.serialize()))
+          .catch((err) => {
+            console.error(err);
+            res.status(500).json({ error: 'Something went wrong' });
+          });
+      }
+      else {
+        const message = `Author not found`;
+        console.error(message);
+        return res.status(400).send(message);
+      }
     })
-    .then(blogPost => res.status(201).json(blogPost.serialize()))
     .catch(err => {
       console.error(err);
-      res.status(500).json({ error: 'Something went wrong' });
-    });
-
-});
-
-
-app.delete('/posts/:id', (req, res) => {
-  Post
-    .findByIdAndRemove(req.params.id)
-    .then(() => {
-      res.status(204).json({ message: 'success' });
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'something went terribly wrong' });
+      res.status(500).json({ error: 'something went horribly awry' });
     });
 });
-
 
 app.put('/posts/:id', (req, res) => {
   if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
@@ -83,29 +88,34 @@ app.put('/posts/:id', (req, res) => {
   }
 
   const updated = {};
-  const updateableFields = ['title', 'content', 'author'];
+  const updateableFields = ['title', 'content'];
   updateableFields.forEach(field => {
     if (field in req.body) {
       updated[field] = req.body[field];
     }
   });
 
-  Post
+  BlogPost
     .findByIdAndUpdate(req.params.id, { $set: updated }, { new: true })
-    .then(updatedPost => res.status(204).end())
-    .catch(err => res.status(500).json({ message: 'Something went wrong' }));
+    .then(updatedPost => res.status(200).json({
+      id: updatedPost.id,
+      title: updatedPost.title,
+      content: updatedPost.content
+    }))
+    .catch(err => res.status(500).json({ message: err }));
 });
 
-
-app.delete('/:id', (req, res) => {
-  Post
+app.delete('/posts/:id', (req, res) => {
+  BlogPost
     .findByIdAndRemove(req.params.id)
     .then(() => {
-      console.log(`Deleted blog post with id \`${req.params.id}\``);
-      res.status(204).end();
+      res.status(204).json({ message: 'success' });
+    })
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ error: 'something went terribly wrong' });
     });
 });
-
 
 app.use('*', function (req, res) {
   res.status(404).json({ message: 'Not Found' });
@@ -122,6 +132,7 @@ function runServer (databaseUrl, port = PORT) {
     // deprication warning solved
     const options = { useNewUrlParser: true };
     mongoose.connect(databaseUrl, options, err => {
+    // mongoose.connect(databaseUrl, err => {
       if (err) {
         return reject(err);
       }
