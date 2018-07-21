@@ -62,7 +62,15 @@ app.post('/posts', (req, res) => {
             content: req.body.content,
             author: req.body.id
           })
-          .then(blogBlogPost => res.status(201).json(blogBlogPost.serialize()))
+          // This doesn't seem to work, will throw error
+          // .then(blogPost => res.status(201).json(blogPost.serialize()))
+          .then(blogPost => res.status(201).json({
+              id: blogPost.id,
+              author: `${author.firstName} ${author.lastName}`,
+              content: blogPost.content,
+              title: blogPost.title,
+              comments: blogPost.comments
+            }))
           .catch((err) => {
             console.error(err);
             res.status(500).json({ error: 'Something went wrong' });
